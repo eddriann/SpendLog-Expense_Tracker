@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1794571486624,
+    "date": "2026-10-01",
+    "description": "Groceries",
+    "category": "Food & Dining",
+    "amount": 200
+  },
+  {
+    "id": 1794571445514,
+    "date": "2026-11-13",
+    "description": "Lunch",
+    "category": "Food & Dining",
+    "amount": 150
+  }
+]
