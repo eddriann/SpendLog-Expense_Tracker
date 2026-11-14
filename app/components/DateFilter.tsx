@@ -1,3 +1,4 @@
+// app/components/DateFilter.tsx
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -7,68 +8,63 @@ export default function DateFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [startDate, setStartDate] = useState(searchParams.get("start") || "");
-  const [endDate, setEndDate] = useState(searchParams.get("end") || "");
+  const [start, setStart] = useState(searchParams.get("start") || "");
+  const [end, setEnd] = useState(searchParams.get("end") || "");
 
-  function applyFilter(e: React.FormEvent) {
+  const handleFilter = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (startDate) params.set("start", startDate);
-    if (endDate) params.set("end", endDate);
-    router.push(`/?${params.toString()}`);
-  }
+    if (start) params.set("start", start);
+    if (end) params.set("end", end);
 
-  function clearFilter() {
-    setStartDate("");
-    setEndDate("");
+    router.push(`/?${params.toString()}`);
+  };
+
+  const handleReset = () => {
+    setStart("");
+    setEnd("");
     router.push("/");
-  }
+  };
 
   return (
     <form
-      onSubmit={applyFilter}
-      className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-wrap items-end gap-4"
+      onSubmit={handleFilter}
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-wrap items-center gap-4"
     >
-      <div>
-        <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
-          Start Date (Inclusive)
-        </label>
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-gray-700">From:</label>
         <input
           type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="border border-gray-300 rounded-md p-2 text-sm bg-white"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
         />
       </div>
 
-      <div>
-        <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">
-          End Date (Inclusive)
-        </label>
+      <div className="flex items-center gap-2">
+        <label className="text-sm font-medium text-gray-700">To:</label>
         <input
           type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="border border-gray-300 rounded-md p-2 text-sm bg-white"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <button
           type="submit"
-          className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium py-2 px-4 rounded-md"
+          className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700 transition"
         >
-          Apply Range
+          Filter
         </button>
-        {(startDate || endDate) && (
-          <button
-            type="button"
-            onClick={clearFilter}
-            className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 text-sm font-medium py-2 px-4 rounded-md"
-          >
-            Reset
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleReset}
+          className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded text-sm font-medium hover:bg-gray-300 transition"
+        >
+          Reset
+        </button>
       </div>
     </form>
   );

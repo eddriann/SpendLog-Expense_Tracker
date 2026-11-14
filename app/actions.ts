@@ -1,6 +1,8 @@
+// app/actions.ts
 "use server";
 
-import { saveExpense } from "./lib/storage";
+import connectDB from "./lib/db";
+import Expense from "./models/Expense";
 import { revalidatePath } from "next/cache";
 
 export async function addExpense(formData: FormData) {
@@ -13,14 +15,18 @@ export async function addExpense(formData: FormData) {
     return;
   }
 
-  // Save directly to local data.json
-  saveExpense({
-    date,
-    description: description.trim(),
-    category: category.trim(),
-    amount,
-  });
+  try {
+    await connectDB();
 
-  // Refresh the page data instantly
-  revalidatePath("/");
+    await Expense.create({
+      date,
+      description: description.trim(),
+      category: category.trim(),
+      amount,
+    });
+
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Failed to save expense to MongoDB:", error);
+  }
 }
