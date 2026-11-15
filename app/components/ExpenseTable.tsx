@@ -1,68 +1,71 @@
+// app/components/ExpenseTable.tsx
+import { money, shortDate } from "../../lib/format";
+
 type Expense = {
-  id: number;
+  id: string;
   date: string;
   description: string;
   category: string;
   amount: number;
 };
 
-export default function ExpenseTable({ expenses }: { expenses: Expense[] }) {
+type Props = {
+  expenses: Expense[];
+  filtered: boolean; // a date range is applied
+  currentYear: number;
+};
+
+export default function ExpenseTable({ expenses, filtered, currentYear }: Props) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-800">
-          Recorded Expenses
-        </h2>
-        <span className="text-sm text-gray-500">{expenses.length} entries</span>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                Category
-              </th>
-              <th className="px-6 py-3 text-right font-medium text-gray-500 uppercase">
-                Amount
-              </th>
+    <table className="w-full text-left">
+      <caption className="sr-only">Recorded expenses</caption>
+      <thead>
+        <tr className="border-b border-[#1C2A43] text-sm text-[#5E6D84]">
+          <th scope="col" className="w-24 py-2 pr-4 font-medium">
+            Date
+          </th>
+          <th scope="col" className="py-2 pr-4 font-medium">
+            Description
+          </th>
+          <th scope="col" className="hidden py-2 pr-4 font-medium sm:table-cell">
+            Category
+          </th>
+          <th scope="col" className="py-2 text-right font-medium">
+            Amount
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {expenses.length === 0 ? (
+          <tr>
+            <td colSpan={4} className="py-10 text-[#5E6D84]">
+              {filtered
+                ? "No expenses in this range. Add one above or widen the dates."
+                : "No expenses yet. Add your first one above."}
+            </td>
+          </tr>
+        ) : (
+          expenses.map((e) => (
+            <tr key={e.id} className="border-b border-[#D5DDD7] align-top">
+              <td className="whitespace-nowrap py-3 pr-4 tabular-nums text-[#5E6D84]">
+                {shortDate(e.date, currentYear)}
+              </td>
+              <td className="py-3 pr-4">
+                {e.description}
+                <span className="mt-0.5 block text-sm text-[#5E6D84] sm:hidden">
+                  {e.category}
+                </span>
+              </td>
+              <td className="hidden py-3 pr-4 text-[#5E6D84] sm:table-cell">
+                {e.category}
+              </td>
+              <td className="whitespace-nowrap py-3 text-right font-semibold tabular-nums">
+                {money(e.amount)}
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {expenses.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
-                  No expenses found in this date range.
-                </td>
-              </tr>
-            ) : (
-              expenses.map((expense) => (
-                <tr key={expense.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 whitespace-nowrap text-gray-700">
-                    {expense.date}
-                  </td>
-                  <td className="px-6 py-3 text-gray-900 font-medium">
-                    {expense.description}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <span className="bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-medium">
-                      {expense.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-right font-semibold text-gray-900">
-                    ${expense.amount.toFixed(2)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          ))
+        )}
+      </tbody>
+    </table>
   );
 }
