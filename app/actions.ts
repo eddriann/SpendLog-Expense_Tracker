@@ -1,4 +1,3 @@
-// app/actions.ts
 "use server";
 
 import connectDB from "./lib/db";

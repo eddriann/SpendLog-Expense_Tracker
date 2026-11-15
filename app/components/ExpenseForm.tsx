@@ -1,4 +1,3 @@
-// app/components/ExpenseForm.tsx
 "use client";
 
 import { useRef, useState } from "react";

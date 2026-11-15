@@ -1,6 +1,3 @@
-// app/components/PaceChart.tsx
-// Cumulative spending vs. a flat budget line, with a dashed projection to month-end.
-// Server-rendered SVG: no chart library, no client JS.
 import { moneyCompact } from "../../lib/format";
 import { C } from "../../lib/theme";
 import { EARLY_DAYS, type Tone } from "../../lib/pace";

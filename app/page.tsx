@@ -16,14 +16,14 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ start?: string; end?: string }>;
 }) {
-  // Await searchParams in Next.js 15+
+  // Await searchParams
   const resolvedSearchParams = await searchParams;
   const start = resolvedSearchParams?.start;
   const end = resolvedSearchParams?.end;
 
   await connectDB();
 
-  // --- Budget hero: always the current month, independent of the date filter ---
+  // Budget hero: always the current month
   const today = todayInZone();
 
   const dailyAgg: { _id: string; total: number }[] = await Expense.aggregate([
@@ -55,7 +55,7 @@ export default async function HomePage({
     }
   }
 
-  // --- Ledger: follows the date filter ---
+  // follows the date filter
   const query: Record<string, any> = {};
   if (start || end) {
     query.date = {};

@@ -1,4 +1,3 @@
-// app/components/ExpenseTable.tsx
 import { money, shortDate } from "../../lib/format";
 
 type Expense = {
@@ -15,7 +14,11 @@ type Props = {
   currentYear: number;
 };
 
-export default function ExpenseTable({ expenses, filtered, currentYear }: Props) {
+export default function ExpenseTable({
+  expenses,
+  filtered,
+  currentYear,
+}: Props) {
   return (
     <table className="w-full text-left">
       <caption className="sr-only">Recorded expenses</caption>
@@ -27,7 +30,10 @@ export default function ExpenseTable({ expenses, filtered, currentYear }: Props)
           <th scope="col" className="py-2 pr-4 font-medium">
             Description
           </th>
-          <th scope="col" className="hidden py-2 pr-4 font-medium sm:table-cell">
+          <th
+            scope="col"
+            className="hidden py-2 pr-4 font-medium sm:table-cell"
+          >
             Category
           </th>
           <th scope="col" className="py-2 text-right font-medium">
