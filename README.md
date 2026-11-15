@@ -116,3 +116,4 @@ Never commit `.env.local`. It is listed in `.gitignore`.
 - **Currency symbol:** `CURRENCY` in `lib/format.ts`
 - **Time zone:** `APP_TIME_ZONE` in `lib/format.ts`
 - **Expense categories:** `lib/categories.ts` (the dropdown and the server validation both read this list)
+"# SpendLog-Expense_Tracker" 
