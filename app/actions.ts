@@ -1,9 +1,9 @@
 // app/actions.ts
 "use server";
 
-import connectDB from "./lib/db";
+import connectDB from "../lib/db";
 import Expense from "./models/Expense";
-import Budget from "../models/Budget";
+import Budget from "./models/Budget";
 import { isCategory } from "../lib/categories";
 import { todayInZone } from "../lib/format";
 import { revalidatePath } from "next/cache";

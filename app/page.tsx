@@ -1,8 +1,8 @@
 // app/page.tsx
 import { Suspense } from "react";
-import connectDB from "./lib/db";
+import connectDB from "../lib/db";
 import Expense from "./models/Expense";
-import Budget from "../models/Budget";
+import Budget from "./models/Budget";
 import { archivo } from "../lib/fonts";
 import { todayInZone } from "../lib/format";
 import BudgetHero from "./components/BudgetHero";
