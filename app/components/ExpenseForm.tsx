@@ -13,7 +13,7 @@ export default function ExpenseForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<{
     message: string;
-    field?: "category";
+    field?: "category" | "date";
   } | null>(null);
 
   async function handleAction(formData: FormData) {
@@ -22,12 +22,13 @@ export default function ExpenseForm() {
       setError(null);
       formRef.current?.reset();
     } else {
-      // Keep what the person typed so they only fix the one field.
       setError({ message: result.error, field: result.field });
     }
   }
 
   const categoryInvalid = error?.field === "category";
+  const dateInvalid = error?.field === "date";
+  const today = todayInZone().iso;
 
   return (
     <form
@@ -102,8 +103,14 @@ export default function ExpenseForm() {
           type="date"
           name="date"
           required
-          defaultValue={todayInZone().iso}
-          className={INPUT}
+          max={today}
+          defaultValue={today}
+          aria-invalid={dateInvalid ? true : undefined}
+          aria-describedby={dateInvalid ? "expense-error" : undefined}
+          onChange={() => {
+            if (dateInvalid) setError(null);
+          }}
+          className={`${INPUT} aria-invalid:border-[#B3261E]`}
         />
       </div>
 
