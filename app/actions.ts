@@ -1,32 +1,28 @@
-// app/actions.ts
 "use server";
 
 import connectDB from "../lib/db";
 import Expense from "./models/Expense";
 import Budget from "./models/Budget";
 import { isCategory } from "../lib/categories";
-import { todayInZone } from "../lib/format";
+import { checkDate, parseAmount } from "../lib/validation";
 import { revalidatePath } from "next/cache";
 
 export type ActionResult =
-  { ok: true } | { ok: false; error: string; field?: "category" | "date" };
+  | { ok: true }
+  | { ok: false; error: string; field?: "category" | "date" | "amount" };
 
-// True for a real calendar date written as YYYY-MM-DD (rejects 2026-02-31, "abc", etc.).
-function isRealDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+
+function text(formData: FormData, key: string): string {
+  const v = formData.get(key);
+  return typeof v === "string" ? v.trim() : "";
 }
 
 export async function addExpense(formData: FormData): Promise<ActionResult> {
-  const date = ((formData.get("date") as string | null) ?? "").trim();
-  const description = (
-    (formData.get("description") as string | null) ?? ""
-  ).trim();
-  const category = ((formData.get("category") as string | null) ?? "").trim();
-  const amount = parseFloat(formData.get("amount") as string);
+  const date = text(formData, "date");
+  const description = text(formData, "description");
+  const category = text(formData, "category");
 
-  // Checked on the server too, so a hand-edited request can't save any other category.
+  // Everything is checked here too, so a request that skips the form can't save bad data.
   if (!isCategory(category)) {
     return {
       ok: false,
@@ -35,24 +31,19 @@ export async function addExpense(formData: FormData): Promise<ActionResult> {
     };
   }
 
-  if (!isRealDate(date)) {
-    return { ok: false, error: "Enter a valid date.", field: "date" };
+  const dateError = checkDate(date);
+  if (dateError) {
+    return { ok: false, error: dateError, field: "date" };
   }
 
-  // Only expenses that have already happened. ISO dates compare correctly as strings.
-  if (date > todayInZone().iso) {
-    return {
-      ok: false,
-      error: "The date can't be in the future. Pick today or an earlier date.",
-      field: "date",
-    };
+  const parsed = parseAmount(text(formData, "amount"));
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, field: "amount" };
   }
+  const amount = parsed.value;
 
-  if (!description || isNaN(amount) || amount <= 0) {
-    return {
-      ok: false,
-      error: "Enter a description and an amount greater than 0.",
-    };
+  if (!description) {
+    return { ok: false, error: "Enter a description." };
   }
 
   try {

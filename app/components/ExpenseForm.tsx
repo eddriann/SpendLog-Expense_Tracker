@@ -1,9 +1,11 @@
+// app/components/ExpenseForm.tsx
 "use client";
 
 import { useRef, useState } from "react";
 import { addExpense } from "../actions";
 import { CATEGORIES } from "../../lib/categories";
 import { todayInZone } from "../../lib/format";
+import { MAX_AMOUNT, checkDate, parseAmount } from "../../lib/validation";
 
 const INPUT =
   "w-full rounded-[4px] border border-[#D5DDD7] bg-white px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C2A43]";
@@ -13,10 +15,21 @@ export default function ExpenseForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<{
     message: string;
-    field?: "category" | "date";
+    field?: "category" | "date" | "amount";
   } | null>(null);
 
   async function handleAction(formData: FormData) {
+    const amountCheck = parseAmount(String(formData.get("amount") ?? ""));
+    if (!amountCheck.ok) {
+      setError({ message: amountCheck.error, field: "amount" });
+      return;
+    }
+    const dateError = checkDate(String(formData.get("date") ?? "").trim());
+    if (dateError) {
+      setError({ message: dateError, field: "date" });
+      return;
+    }
+
     const result = await addExpense(formData);
     if (result.ok) {
       setError(null);
@@ -28,6 +41,7 @@ export default function ExpenseForm() {
 
   const categoryInvalid = error?.field === "category";
   const dateInvalid = error?.field === "date";
+  const amountInvalid = error?.field === "amount";
   const today = todayInZone().iso;
 
   return (
@@ -46,10 +60,16 @@ export default function ExpenseForm() {
           name="amount"
           step="0.01"
           min="0.01"
+          max={MAX_AMOUNT}
           inputMode="decimal"
           placeholder="0.00"
           required
-          className={`${INPUT} text-lg font-semibold tabular-nums`}
+          aria-invalid={amountInvalid ? true : undefined}
+          aria-describedby={amountInvalid ? "expense-error" : undefined}
+          onChange={() => {
+            if (amountInvalid) setError(null);
+          }}
+          className={`${INPUT} aria-invalid:border-[#B3261E] text-lg font-semibold tabular-nums`}
         />
       </div>
 
