@@ -1,4 +1,4 @@
-import { moneyCompact } from "../../lib/format";
+import { CURRENCY, moneyCompact } from "../../lib/format";
 import { C } from "../../lib/theme";
 import { EARLY_DAYS, type Tone } from "../../lib/pace";
 
@@ -21,6 +21,8 @@ type Variant = {
   font: number;
   tickEvery: number;
   className: string;
+  // Large-screen version only: tight axis, today marker, over-budget shading, empty message.
+  enhanced?: boolean;
 };
 
 const DESKTOP: Variant = {
@@ -32,7 +34,20 @@ const DESKTOP: Variant = {
   padB: 34,
   font: 12,
   tickEvery: 5,
-  className: "hidden sm:block h-auto w-full",
+  className: "hidden sm:block lg:hidden h-auto w-full",
+};
+
+const WIDE: Variant = {
+  w: 640,
+  h: 320,
+  padL: 58,
+  padR: 80,
+  padT: 26,
+  padB: 34,
+  font: 12,
+  tickEvery: 5,
+  className: "hidden lg:block h-auto w-full",
+  enhanced: true,
 };
 
 const MOBILE: Variant = {
@@ -47,12 +62,10 @@ const MOBILE: Variant = {
   className: "block sm:hidden h-auto w-full",
 };
 
-// Draw the spent line left to right once on load. Skipped for reduced motion.
 const CSS = `@keyframes pace-draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
 .pace-draw{stroke-dasharray:1;animation:pace-draw 700ms ease-out both}
 @media (prefers-reduced-motion:reduce){.pace-draw{animation:none}}`;
 
-/** Smallest "round" step so that four steps cover the top value with a little headroom. */
 function niceStep(maxVal: number): number {
   const target = (maxVal * 1.08) / 4;
   const pow = Math.pow(10, Math.floor(Math.log10(target)));
@@ -60,6 +73,34 @@ function niceStep(maxVal: number): number {
     if (m * pow >= target) return m * pow;
   }
   return 10 * pow;
+}
+
+function niceScale(
+  top: number,
+  maxIntervals = 5,
+): { step: number; yMax: number } {
+  const need = top * 1.08;
+  const base = Math.pow(10, Math.floor(Math.log10(need / maxIntervals)));
+  for (const p of [base, base * 10]) {
+    for (const m of [1, 2, 2.5, 5]) {
+      const step = m * p;
+      const n = Math.ceil(need / step - 1e-9);
+      if (n <= maxIntervals) {
+        const intervals = Math.max(n, 2);
+        return { step, yMax: step * intervals };
+      }
+    }
+  }
+  const step = base * 10;
+  return { step, yMax: step * maxIntervals };
+}
+
+function tickLabel(n: number): string {
+  if (n >= 1000) {
+    const k = n / 1000;
+    return `${CURRENCY}${Number.isInteger(k) ? k : parseFloat(k.toFixed(2))}k`;
+  }
+  return `${CURRENCY}${Math.round(n)}`;
 }
 
 const f = (n: number) => n.toFixed(1);
@@ -84,9 +125,16 @@ function Chart({
   const showProjection = day > EARLY_DAYS && day < daysInMonth && spent > 0;
   const projected = showProjection ? (spent / day) * daysInMonth : spent;
 
-  const top = Math.max(budget ?? 0, spent, showProjection ? projected : 0, 1);
-  const step = niceStep(top);
-  const yMax = step * 4;
+  const top = Math.max(
+    budget ?? 0,
+    spent,
+    showProjection ? projected : 0,
+    v.enhanced ? 100 : 1,
+  );
+  const scale = v.enhanced ? niceScale(top) : null;
+  const step = scale ? scale.step : niceStep(top);
+  const yMax = scale ? scale.yMax : step * 4;
+  const empty = Boolean(v.enhanced) && spent === 0;
 
   const plotW = v.w - v.padL - v.padR;
   const plotH = v.h - v.padT - v.padB;
@@ -101,11 +149,13 @@ function Chart({
     ...cum.map((val, i) => `L ${f(x(i + 1))} ${f(y(val))}`),
   ].join(" ");
 
-  const yTicks = [0, 1, 2, 3, 4].map((i) => i * step);
+  const yTicks = Array.from(
+    { length: Math.round(yMax / step) + 1 },
+    (_, i) => i * step,
+  );
   const xTicks: number[] = [1];
   for (let d = v.tickEvery; d <= daysInMonth; d += v.tickEvery) xTicks.push(d);
 
-  // Direct labels on the right edge instead of a legend; nudge apart if they collide.
   const rightLabels: { text: string; y: number; fill: string }[] = [];
   if (budget != null)
     rightLabels.push({ text: "budget", y: y(budget), fill: C.slate });
@@ -115,6 +165,30 @@ function Chart({
   for (let i = 1; i < rightLabels.length; i++) {
     const minY = rightLabels[i - 1].y + v.font + 4;
     if (rightLabels[i].y < minY) rightLabels[i].y = minY;
+  }
+
+  let shade: { points: string; color: string } | null = null;
+  if (v.enhanced && budget != null && spent > 0) {
+    const pts: [number, number][] = [];
+    if (spent > budget) {
+      // Already over: between the spent line and the budget line, from where it crossed.
+      const k = cum.findIndex((c) => c > budget);
+      const prev = k === 0 ? 0 : cum[k - 1];
+      const t = (budget - prev) / (cum[k] - prev);
+      pts.push([x(k + t), y(budget)]);
+      for (let i = k; i < cum.length; i++) pts.push([x(i + 1), y(cum[i])]);
+      pts.push([x(day), y(budget)]);
+      shade = { points: "", color: C.crimson };
+    } else if (showProjection && projected > budget) {
+      // Heading over: between the projection and the budget line, from where it crosses.
+      const t = (budget - spent) / (projected - spent);
+      pts.push([x(day + t * (daysInMonth - day)), y(budget)]);
+      pts.push([x(daysInMonth), y(projected)]);
+      pts.push([x(daysInMonth), y(budget)]);
+      shade = { points: "", color: C.amber };
+    }
+    if (shade)
+      shade.points = pts.map(([px, py]) => `${f(px)},${f(py)}`).join(" ");
   }
 
   const spentLabelY =
@@ -145,7 +219,7 @@ function Chart({
             fontSize={v.font}
             fill={C.slate}
           >
-            {moneyCompact(t)}
+            {v.enhanced ? tickLabel(t) : moneyCompact(t)}
           </text>
         </g>
       ))}
@@ -163,6 +237,10 @@ function Chart({
         </text>
       ))}
 
+      {shade && (
+        <polygon points={shade.points} fill={shade.color} fillOpacity={0.16} />
+      )}
+
       {budget != null && (
         <line
           x1={x(0)}
@@ -174,6 +252,46 @@ function Chart({
           strokeDasharray="1 5"
           strokeLinecap="round"
         />
+      )}
+
+      {v.enhanced && (
+        <>
+          <line
+            x1={x(day)}
+            x2={x(day)}
+            y1={y(0)}
+            y2={y(yMax)}
+            stroke={C.slate}
+            strokeOpacity={0.55}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+          />
+          <text
+            x={x(day)}
+            y={v.padT - 9}
+            textAnchor="middle"
+            fontSize={v.font}
+            fill={C.slate}
+          >
+            today
+          </text>
+        </>
+      )}
+
+      {empty && (
+        <text
+          x={(x(0) + x(daysInMonth)) / 2}
+          y={y((budget ?? yMax) * 0.45)}
+          textAnchor="middle"
+          fontSize={v.font + 2}
+          fill={C.slate}
+          stroke={C.paper}
+          strokeWidth={6}
+          strokeLinejoin="round"
+          paintOrder="stroke"
+        >
+          No spending yet this month
+        </text>
       )}
 
       {showProjection && (
@@ -196,33 +314,37 @@ function Chart({
         </>
       )}
 
-      <path
-        d={spentD}
-        fill="none"
-        stroke={C.ink}
-        strokeWidth={2.5}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        pathLength={1}
-        className="pace-draw"
-      />
-      <circle
-        cx={x(day)}
-        cy={y(spent)}
-        r={4.5}
-        fill={C.ink}
-        stroke={C.paper}
-        strokeWidth={2}
-      />
-      <text
-        x={x(day) - 8}
-        y={spentLabelY}
-        textAnchor="end"
-        fontSize={v.font}
-        fill={C.ink}
-      >
-        spent
-      </text>
+      {!empty && (
+        <>
+          <path
+            d={spentD}
+            fill="none"
+            stroke={C.ink}
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            pathLength={1}
+            className="pace-draw"
+          />
+          <circle
+            cx={x(day)}
+            cy={y(spent)}
+            r={4.5}
+            fill={C.ink}
+            stroke={C.paper}
+            strokeWidth={2}
+          />
+          <text
+            x={x(day) - 8}
+            y={spentLabelY}
+            textAnchor="end"
+            fontSize={v.font}
+            fill={C.ink}
+          >
+            spent
+          </text>
+        </>
+      )}
 
       {rightLabels.map((l) => (
         <text
@@ -245,6 +367,7 @@ export default function PaceChart(props: Props) {
       <style>{CSS}</style>
       <Chart {...props} v={DESKTOP} />
       <Chart {...props} v={MOBILE} />
+      <Chart {...props} v={WIDE} />
     </>
   );
 }

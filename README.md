@@ -12,7 +12,7 @@ You log expenses, set a monthly budget, and the home page tells you in plain lan
 - **Add expenses.** Amount, description, category and date. Categories are limited to a fixed list and validated in the browser and on the server.
 - **Date filter.** Filter the ledger and category breakdown by a date range. The budget section always shows the current month.
 - **Category breakdown.** Spending per category for the selected range, ranked from highest to lowest.
-- **Ledger.** A table of recorded expenses, newest first.
+- **Ledger.** Recorded expenses grouped by day or viewed in a table, newest first.
 - **Philippine peso (₱)** throughout, with dates and "this month" calculated in the Asia/Manila time zone.
 
 ## How the pace projection works
@@ -24,15 +24,15 @@ You log expenses, set a monthly budget, and the home page tells you in plain lan
 
 ## Tech stack
 
-| Area | Technology |
-| --- | --- |
+| Area      | Technology                                                                         |
+| --------- | ---------------------------------------------------------------------------------- |
 | Framework | [Next.js](https://nextjs.org/) 15+ (App Router, Server Components, Server Actions) |
-| Language | TypeScript |
-| UI | React, [Tailwind CSS](https://tailwindcss.com/) |
-| Database | [MongoDB](https://www.mongodb.com/) (cloud cluster) |
-| ODM | [Mongoose](https://mongoosejs.com/) |
-| Font | [Archivo](https://fonts.google.com/specimen/Archivo) via `next/font/google` |
-| Charts | Hand-built server-rendered SVG (no chart library) |
+| Language  | TypeScript                                                                         |
+| UI        | React, [Tailwind CSS](https://tailwindcss.com/)                                    |
+| Database  | [MongoDB](https://www.mongodb.com/) (cloud cluster)                                |
+| ODM       | [Mongoose](https://mongoosejs.com/)                                                |
+| Font      | [Archivo](https://fonts.google.com/specimen/Archivo) via `next/font/google`        |
+| Charts    | Hand-built server-rendered SVG (no chart library)                                  |
 
 Data is read directly in Server Components and written through Server Actions, so the app has no separate API routes.
 
@@ -40,8 +40,10 @@ Data is read directly in Server Components and written through Server Actions, s
 
 ```
 app/
+  layout.tsx                Root layout and global font/metadata setup
   page.tsx                  Home page: loads data, composes the sections
   actions.ts                Server actions: addExpense, setBudget
+  globals.css               Global styles and Tailwind setup
   components/
     BudgetHero.tsx          Month heading, budget form, status sentence, chart
     PaceChart.tsx           SVG chart: spent, budget and projected lines
@@ -49,6 +51,10 @@ app/
     DateFilter.tsx          Date range filter (client component)
     CategoryBars.tsx        Spending per category
     ExpenseTable.tsx        Ledger table
+    LedgerByDay.tsx         Expenses grouped by day
+  models/
+    Expense.ts              Expense schema
+    Budget.ts               Budget schema
 lib/
   db.ts                     Cached MongoDB connection
   pace.ts                   Budget status logic and sentences
@@ -56,29 +62,37 @@ lib/
   categories.ts             Allowed expense categories
   theme.ts                  Color palette used by the chart
   fonts.ts                  Font setup
-models/
-  Expense.ts                Expense schema
-  Budget.ts                 Budget schema
+  validation.ts             Input validation schemas and helpers
 ```
 
 ## Data model
 
 **Expense**
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `date` | string | `YYYY-MM-DD` |
-| `description` | string | |
-| `category` | string | One of the categories in `lib/categories.ts` |
-| `amount` | number | Greater than 0 |
-| `createdAt` | Date | Set automatically |
+| Field         | Type   | Notes                                        |
+| ------------- | ------ | -------------------------------------------- |
+| `date`        | string | `YYYY-MM-DD`                                 |
+| `description` | string |                                              |
+| `category`    | string | One of the categories in `lib/categories.ts` |
+| `amount`      | number | Greater than 0                               |
+| `createdAt`   | Date   | Set automatically                            |
 
 **Budget**
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `month` | string | `YYYY-MM`, unique |
-| `amount` | number | Monthly budget |
+| Field    | Type   | Notes             |
+| -------- | ------ | ----------------- |
+| `month`  | string | `YYYY-MM`, unique |
+| `amount` | number | Monthly budget    |
+
+**Group Members**
+
+- Malto
+- Baliza
+- Trapani
+- Lita
+- Llabres
+- Pagayon
+- Ocsina
 
 ## Getting started
 
@@ -116,4 +130,3 @@ Never commit `.env.local`. It is listed in `.gitignore`.
 - **Currency symbol:** `CURRENCY` in `lib/format.ts`
 - **Time zone:** `APP_TIME_ZONE` in `lib/format.ts`
 - **Expense categories:** `lib/categories.ts` (the dropdown and the server validation both read this list)
-"# SpendLog-Expense_Tracker" 

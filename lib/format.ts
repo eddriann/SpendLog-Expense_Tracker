@@ -1,6 +1,3 @@
-// lib/format.ts
-// Single place for currency, dates and "what month is it" so nothing is hardcoded in components.
-
 export const CURRENCY = "₱";
 export const APP_TIME_ZONE = "Asia/Manila";
 
@@ -53,6 +50,19 @@ export function monthShort(ym: string): string {
 export function shortDate(iso: string, currentYear: number): string {
   const [y, m, d] = iso.split("-").map(Number);
   const opts: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  };
+  if (y !== currentYear) opts.year = "numeric";
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", opts);
+}
+
+/** "2026-11-23" -> "Mon, Nov 23" (adds the year when it isn't the current year) */
+export function dayHeading(iso: string, currentYear: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const opts: Intl.DateTimeFormatOptions = {
+    weekday: "short",
     month: "short",
     day: "numeric",
     timeZone: "UTC",

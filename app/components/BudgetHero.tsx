@@ -2,6 +2,7 @@ import { setBudget } from "../actions";
 import { monthLabel } from "../../lib/format";
 import { summarizePace } from "../../lib/pace";
 import { C } from "../../lib/theme";
+import BudgetEditor from "./BudgetEditor";
 import PaceChart from "./PaceChart";
 
 type Props = {
@@ -33,7 +34,8 @@ export default function BudgetHero({
           {monthLabel(month)}
         </h1>
 
-        <form action={setBudget} className="flex items-end gap-2">
+        {/* Below 1024px: the budget form, always visible. */}
+        <form action={setBudget} className="flex items-end gap-2 lg:hidden">
           <input type="hidden" name="month" value={month} />
           <div>
             <label
@@ -62,6 +64,13 @@ export default function BudgetHero({
             Save budget
           </button>
         </form>
+
+        {/* From 1024px: a quiet "Edit budget" link once a budget exists. */}
+        {budget != null && (
+          <div className="hidden lg:block">
+            <BudgetEditor month={month} budget={budget} mode="link" />
+          </div>
+        )}
       </div>
 
       {carriedFrom && (
@@ -71,34 +80,45 @@ export default function BudgetHero({
         </p>
       )}
 
-      <h2
-        className="mt-10 max-w-[24ch] text-[clamp(2rem,5.5vw,3rem)] font-bold leading-[1.08] tracking-[-0.01em] text-[#1C2A43]"
-        style={{
-          fontVariationSettings: '"wdth" 72',
-          textWrap: "balance",
-        }}
-      >
-        {pace.headline}
-      </h2>
+      <div className="lg:mt-10 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-14">
+        <div>
+          <h2
+            className="mt-10 max-w-[24ch] text-[clamp(2rem,5.5vw,3rem)] font-bold leading-[1.08] tracking-[-0.01em] text-[#1C2A43] lg:mt-0"
+            style={{
+              fontVariationSettings: '"wdth" 72',
+              textWrap: "balance",
+            }}
+          >
+            {pace.headline}
+          </h2>
 
-      <p className="mt-4 flex max-w-[62ch] items-start gap-3 text-base leading-relaxed text-[#1C2A43]">
-        <span
-          aria-hidden="true"
-          className="mt-[0.5em] inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ backgroundColor: MARKER[pace.tone] }}
-        />
-        <span>{pace.detail}</span>
-      </p>
+          <p className="mt-4 flex max-w-[62ch] items-start gap-3 text-base leading-relaxed text-[#1C2A43]">
+            <span
+              aria-hidden="true"
+              className="mt-[0.5em] inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: MARKER[pace.tone] }}
+            />
+            <span>{pace.detail}</span>
+          </p>
 
-      <div className="mt-8">
-        <PaceChart
-          daily={daily}
-          day={day}
-          daysInMonth={daysInMonth}
-          budget={budget}
-          tone={pace.tone}
-          label={`${pace.headline} Chart of cumulative spending against the monthly budget.`}
-        />
+          {/* From 1024px, with no budget yet: a large first-run question. */}
+          {budget == null && (
+            <div className="hidden lg:block">
+              <BudgetEditor month={month} budget={null} mode="prompt" />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 lg:mt-0">
+          <PaceChart
+            daily={daily}
+            day={day}
+            daysInMonth={daysInMonth}
+            budget={budget}
+            tone={pace.tone}
+            label={`${pace.headline} Chart of cumulative spending against the monthly budget.`}
+          />
+        </div>
       </div>
     </section>
   );

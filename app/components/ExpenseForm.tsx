@@ -1,10 +1,9 @@
-// app/components/ExpenseForm.tsx
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addExpense } from "../actions";
 import { CATEGORIES } from "../../lib/categories";
-import { todayInZone } from "../../lib/format";
+import { money, todayInZone } from "../../lib/format";
 import { MAX_AMOUNT, checkDate, parseAmount } from "../../lib/validation";
 
 const INPUT =
@@ -17,8 +16,19 @@ export default function ExpenseForm() {
     message: string;
     field?: "category" | "date" | "amount";
   } | null>(null);
+  // "Added ₱120.00 to Food & Dining." Shown from 1024px up only, and cleared after a few seconds.
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 6000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   async function handleAction(formData: FormData) {
+    setNotice(null);
+    // Same rules as the server, run first. Some phone browsers ignore `max` on date and
+    // number inputs, so the browser alone can't be trusted to stop a bad value.
     const amountCheck = parseAmount(String(formData.get("amount") ?? ""));
     if (!amountCheck.ok) {
       setError({ message: amountCheck.error, field: "amount" });
@@ -33,8 +43,12 @@ export default function ExpenseForm() {
     const result = await addExpense(formData);
     if (result.ok) {
       setError(null);
+      setNotice(
+        `Added ${money(amountCheck.value)} to ${String(formData.get("category") ?? "")}.`,
+      );
       formRef.current?.reset();
     } else {
+      // Keep what the person typed so they only fix the one field.
       setError({ message: result.error, field: result.field });
     }
   }
@@ -48,7 +62,7 @@ export default function ExpenseForm() {
     <form
       ref={formRef}
       action={handleAction}
-      className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[8rem_1fr_11rem_9.5rem_auto]"
+      className="grid grid-cols-2 items-end gap-3 sm:grid-cols-[8rem_1fr_11rem_9.5rem_auto] lg:grid-cols-1"
     >
       <div>
         <label htmlFor="expense-amount" className={LABEL}>
@@ -136,7 +150,7 @@ export default function ExpenseForm() {
 
       <button
         type="submit"
-        className="col-span-2 rounded-[4px] bg-[#1C2A43] px-4 py-2 text-sm font-semibold text-[#F5F7F3] hover:bg-[#2B3B5C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C2A43] sm:col-span-1"
+        className="col-span-2 rounded-[4px] bg-[#1C2A43] px-4 py-2 text-sm font-semibold text-[#F5F7F3] hover:bg-[#2B3B5C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C2A43] sm:col-span-1 lg:col-span-1"
       >
         Add expense
       </button>
@@ -145,9 +159,18 @@ export default function ExpenseForm() {
         <p
           id="expense-error"
           role="alert"
-          className="col-span-2 text-sm text-[#B3261E] sm:col-span-5"
+          className="col-span-2 text-sm text-[#B3261E] sm:col-span-5 lg:col-span-1"
         >
           {error.message}
+        </p>
+      )}
+
+      {notice && (
+        <p
+          role="status"
+          className="hidden text-sm text-[#1C2A43] lg:col-span-1 lg:block"
+        >
+          {notice}
         </p>
       )}
     </form>

@@ -10,13 +10,13 @@ import ExpenseForm from "./components/ExpenseForm";
 import DateFilter from "./components/DateFilter";
 import CategoryBars from "./components/CategoryBars";
 import ExpenseTable from "./components/ExpenseTable";
+import LedgerByDay from "./components/LedgerByDay";
 
 export default async function HomePage({
   searchParams,
 }: {
   searchParams: Promise<{ start?: string; end?: string }>;
 }) {
-  // Await searchParams
   const resolvedSearchParams = await searchParams;
   const start = resolvedSearchParams?.start;
   const end = resolvedSearchParams?.end;
@@ -55,7 +55,7 @@ export default async function HomePage({
     }
   }
 
-  // follows the date filter
+  //  Ledger follows the date filter
   const query: Record<string, any> = {};
   if (start || end) {
     query.date = {};
@@ -88,7 +88,7 @@ export default async function HomePage({
     <main
       className={`${archivo.className} min-h-screen bg-[#F5F7F3] px-4 py-10 text-[#1C2A43] sm:px-6`}
     >
-      <div className="mx-auto max-w-[860px]">
+      <div className="mx-auto max-w-[860px] lg:max-w-[1120px]">
         <BudgetHero
           month={today.month}
           day={today.day}
@@ -98,45 +98,59 @@ export default async function HomePage({
           carriedFrom={carriedFrom}
         />
 
-        <section
-          aria-labelledby="add-heading"
-          className="mt-12 border-t border-[#D5DDD7] pt-6"
-        >
-          <h2 id="add-heading" className="mb-4 text-xl font-semibold">
-            Add expense
-          </h2>
-          <ExpenseForm />
-        </section>
-
-        <section
-          aria-labelledby="ledger-heading"
-          className="mt-12 border-t border-[#D5DDD7] pt-6"
-        >
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 id="ledger-heading" className="text-xl font-semibold">
-              Expenses
-              <span className="ml-3 text-base font-normal text-[#5E6D84]">
-                {expenses.length}{" "}
-                {expenses.length === 1 ? "expense" : "expenses"}
-              </span>
+        {/* Below 1024px these two sections stack. From 1024px: form on the left, ledger on the right. */}
+        <div className="lg:mt-12 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-x-14">
+          <section
+            aria-labelledby="add-heading"
+            className="mt-12 border-t border-[#D5DDD7] pt-6 lg:sticky lg:top-8 lg:mt-0 lg:self-start"
+          >
+            <h2 id="add-heading" className="mb-4 text-xl font-semibold">
+              Add expense
             </h2>
-            <Suspense fallback={null}>
-              <DateFilter />
-            </Suspense>
-          </div>
+            <ExpenseForm />
+          </section>
 
-          <div className="mt-8">
-            <CategoryBars rows={categoryReport} />
-          </div>
+          <section
+            aria-labelledby="ledger-heading"
+            className="mt-12 border-t border-[#D5DDD7] pt-6 lg:mt-0"
+          >
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <h2 id="ledger-heading" className="text-xl font-semibold">
+                Expenses
+                <span
+                  className={`ml-3 text-base font-normal text-[#5E6D84] ${expenses.length === 0 ? "lg:hidden" : ""}`}
+                >
+                  {expenses.length}{" "}
+                  {expenses.length === 1 ? "expense" : "expenses"}
+                </span>
+              </h2>
+              <Suspense fallback={null}>
+                <DateFilter />
+              </Suspense>
+            </div>
 
-          <div className="mt-10">
-            <ExpenseTable
-              expenses={expenses}
-              filtered={Boolean(start || end)}
-              currentYear={today.year}
-            />
-          </div>
-        </section>
+            <div className="mt-8">
+              <CategoryBars rows={categoryReport} />
+            </div>
+
+            <div className="mt-10">
+              <div className="lg:hidden">
+                <ExpenseTable
+                  expenses={expenses}
+                  filtered={Boolean(start || end)}
+                  currentYear={today.year}
+                />
+              </div>
+              <div className="hidden lg:block">
+                <LedgerByDay
+                  expenses={expenses}
+                  filtered={Boolean(start || end)}
+                  currentYear={today.year}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );
