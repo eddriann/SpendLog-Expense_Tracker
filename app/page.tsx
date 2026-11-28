@@ -11,19 +11,34 @@ import DateFilter from "./components/DateFilter";
 import CategoryBars from "./components/CategoryBars";
 import ExpenseTable from "./components/ExpenseTable";
 import LedgerByDay from "./components/LedgerByDay";
+import LedgerPager from "./components/LedgerPager";
+import ExportPanel from "./components/ExportPanel";
+import { checkRange } from "../lib/validation";
+
+const DAYS_PER_PAGE = 7;
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ start?: string; end?: string }>;
+  searchParams: Promise<{
+    start?: string | string[];
+    end?: string | string[];
+    page?: string | string[];
+  }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const start = resolvedSearchParams?.start;
-  const end = resolvedSearchParams?.end;
+  const one = (v: string | string[] | undefined) =>
+    typeof v === "string" ? v : undefined;
+  const rawStart = one(resolvedSearchParams?.start);
+  const rawEnd = one(resolvedSearchParams?.end);
+  const rawPage = one(resolvedSearchParams?.page);
+
+  const rangeError = checkRange(rawStart, rawEnd);
+  const start = rangeError ? undefined : rawStart;
+  const end = rangeError ? undefined : rawEnd;
 
   await connectDB();
 
-  // Budget hero: always the current month
   const today = todayInZone();
 
   const dailyAgg: { _id: string; total: number }[] = await Expense.aggregate([
@@ -35,14 +50,12 @@ export default async function HomePage({
     { $group: { _id: "$date", total: { $sum: "$amount" } } },
   ]);
 
-  //
   const daily: number[] = Array.from({ length: today.daysInMonth }, () => 0);
   for (const row of dailyAgg) {
     const d = Number(row._id.slice(8, 10));
     if (d >= 1 && d <= today.daysInMonth) daily[d - 1] += row.total;
   }
 
-  // get budget from db
   let budgetDoc = (await Budget.findOne({
     month: today.month,
   }).lean()) as { month: string; amount: number } | null;
@@ -57,7 +70,6 @@ export default async function HomePage({
     }
   }
 
-  //  Ledger follows the date filter
   const query: Record<string, any> = {};
   if (start || end) {
     query.date = {};
@@ -76,6 +88,17 @@ export default async function HomePage({
     category: exp.category as string,
     amount: exp.amount as number,
   }));
+
+  const dayKeys = Array.from(new Set(expenses.map((e) => e.date)));
+  const pageCount = Math.max(1, Math.ceil(dayKeys.length / DAYS_PER_PAGE));
+  const requested = /^[1-9]\d{0,5}$/.test(rawPage ?? "") ? Number(rawPage) : 1;
+  const page = Math.min(requested, pageCount);
+  const pageDays = dayKeys.slice(
+    (page - 1) * DAYS_PER_PAGE,
+    page * DAYS_PER_PAGE,
+  );
+  const pageDaySet = new Set(pageDays);
+  const pageExpenses = expenses.filter((e) => pageDaySet.has(e.date));
 
   const categoryTotals: Record<string, number> = {};
   for (const exp of expenses) {
@@ -99,7 +122,7 @@ export default async function HomePage({
           budget={budgetDoc ? budgetDoc.amount : null}
           carriedFrom={carriedFrom}
         />
-
+        <ExportPanel />
         {/* Below 1024px these two sections stack. From 1024px: form on the left, ledger on the right. */}
         <div className="lg:mt-12 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-x-14">
           <section
@@ -145,14 +168,27 @@ export default async function HomePage({
               </div>
               <div className="hidden lg:block">
                 <LedgerByDay
-                  expenses={expenses}
+                  expenses={pageExpenses}
                   filtered={Boolean(start || end)}
                   currentYear={today.year}
                 />
+                {pageDays.length > 0 && (
+                  <LedgerPager
+                    page={page}
+                    pageCount={pageCount}
+                    firstDate={pageDays[0]}
+                    lastDate={pageDays[pageDays.length - 1]}
+                    currentYear={today.year}
+                    start={start}
+                    end={end}
+                  />
+                )}
               </div>
             </div>
           </section>
         </div>
+
+        <div className="hidden lg:block"></div>
       </div>
     </main>
   );

@@ -1,15 +1,16 @@
+// app/actions.ts
 "use server";
 
 import connectDB from "../lib/db";
 import Expense from "./models/Expense";
 import Budget from "./models/Budget";
 import { isCategory } from "../lib/categories";
-import { checkDate, parseAmount } from "../lib/validation";
+import { checkDate, checkDescription, cleanDescription, parseAmount } from "../lib/validation";
 import { revalidatePath } from "next/cache";
 
 export type ActionResult =
   | { ok: true }
-  | { ok: false; error: string; field?: "category" | "date" | "amount" };
+  | { ok: false; error: string; field?: "category" | "date" | "amount" | "description" };
 
 
 function text(formData: FormData, key: string): string {
@@ -19,10 +20,10 @@ function text(formData: FormData, key: string): string {
 
 export async function addExpense(formData: FormData): Promise<ActionResult> {
   const date = text(formData, "date");
-  const description = text(formData, "description");
+  const description = cleanDescription(text(formData, "description"));
   const category = text(formData, "category");
 
-  // Check if the category is valid.
+
   if (!isCategory(category)) {
     return {
       ok: false,
@@ -30,7 +31,7 @@ export async function addExpense(formData: FormData): Promise<ActionResult> {
       field: "category",
     };
   }
-  // Check if user input is valid (Date, Amount, Description)
+
   const dateError = checkDate(date);
   if (dateError) {
     return { ok: false, error: dateError, field: "date" };
@@ -42,11 +43,11 @@ export async function addExpense(formData: FormData): Promise<ActionResult> {
   }
   const amount = parsed.value;
 
-  if (!description) {
-    return { ok: false, error: "Enter a description." };
+  const descriptionError = checkDescription(description);
+  if (descriptionError) {
+    return { ok: false, error: descriptionError, field: "description" };
   }
 
-  // Connect to database, Insert in database
   try {
     await connectDB();
 
@@ -64,11 +65,10 @@ export async function setBudget(formData: FormData) {
   const month = formData.get("month") as string;
   const amount = parseFloat(formData.get("amount") as string);
 
-  // Check if the amount is a number
   if (!/^\d{4}-\d{2}$/.test(month) || isNaN(amount) || amount <= 0) {
     return;
   }
-  // Connect to database and updatea budget
+
   try {
     await connectDB();
     await Budget.findOneAndUpdate({ month }, { amount }, { upsert: true });

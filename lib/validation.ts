@@ -1,8 +1,6 @@
 import { moneyWhole, todayInZone } from "./format";
 
-// Max amount that can be inserted
 export const MAX_AMOUNT = 1_000_000_000;
-
 
 export function isRealDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -10,7 +8,6 @@ export function isRealDate(value: string): boolean {
   return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 
-// Validate if the date is in the future
 export function checkDate(value: string): string | null {
   if (!isRealDate(value)) return "Enter a valid date.";
   // ISO dates compare correctly as strings. "Today" is in the app's time zone.
@@ -48,4 +45,32 @@ export function parseAmount(raw: string): AmountResult {
   }
 
   return { ok: true, value };
+}
+
+
+export const MAX_DESCRIPTION = 200;
+
+
+export function cleanDescription(raw: string): string {
+  return raw.replace(/\s+/g, " ").trim();
+}
+
+
+export function checkDescription(clean: string): string | null {
+  if (!clean) return "Enter a description.";
+  if (clean.length > MAX_DESCRIPTION) {
+    return `The description can't be longer than ${MAX_DESCRIPTION} characters.`;
+  }
+  return null;
+}
+
+
+export function checkRange(start?: string, end?: string): string | null {
+  if ((start && !isRealDate(start)) || (end && !isRealDate(end))) {
+    return "Enter valid dates.";
+  }
+  if (start && end && start > end) {
+    return "The “From” date can't be later than the “To” date.";
+  }
+  return null;
 }

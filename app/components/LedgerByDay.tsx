@@ -31,7 +31,6 @@ export default function LedgerByDay({
     );
   }
 
-  // The list is already sorted by date, so equal dates sit next to each other.
   const days: Day[] = [];
   for (const e of expenses) {
     const last = days[days.length - 1];
@@ -60,7 +59,7 @@ export default function LedgerByDay({
             {d.items.map((e) => (
               <li
                 key={e.id}
-                className="grid grid-cols-[minmax(0,1fr)_11rem_auto] gap-x-4 border-b border-[#D5DDD7] py-3"
+                className="grid grid-cols-[minmax(0,1fr)_11rem_9rem] gap-x-4 border-b border-[#D5DDD7] py-3"
               >
                 <span>{e.description}</span>
                 <span className="text-[#5E6D84]">{e.category}</span>
