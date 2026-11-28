@@ -1,5 +1,5 @@
 import { setBudget } from "../actions";
-import { monthLabel } from "../../lib/format";
+import { money, monthLabel } from "../../lib/format";
 import { summarizePace } from "../../lib/pace";
 import { C } from "../../lib/theme";
 import BudgetEditor from "./BudgetEditor";
@@ -25,6 +25,7 @@ export default function BudgetHero({
   carriedFrom,
 }: Props) {
   const spent = daily.slice(0, day).reduce((a, b) => a + b, 0);
+  const today = daily[day - 1] ?? 0;
   const pace = summarizePace({ month, day, daysInMonth, spent, budget });
 
   return (
@@ -99,6 +100,13 @@ export default function BudgetHero({
               style={{ backgroundColor: MARKER[pace.tone] }}
             />
             <span>{pace.detail}</span>
+          </p>
+
+          {/* From 1024px: today's spending in one plain line, lined up with the sentence above. */}
+          <p className="mt-3 hidden pl-[1.375rem] text-base text-[#5E6D84] lg:block">
+            {today > 0
+              ? `You've spent ${money(today)} today.`
+              : "You haven't spent anything today."}
           </p>
 
           {/* From 1024px, with no budget yet: a large first-run question. */}
