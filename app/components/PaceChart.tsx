@@ -21,7 +21,6 @@ type Variant = {
   font: number;
   tickEvery: number;
   className: string;
-  // Large-screen version only: tight axis, today marker, over-budget shading, empty message.
   enhanced?: boolean;
 };
 

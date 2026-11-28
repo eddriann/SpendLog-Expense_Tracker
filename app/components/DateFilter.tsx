@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+// Input and label className design
 const INPUT =
   "rounded-[4px] border border-[#D5DDD7] bg-white px-3 py-1.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C2A43]";
 const LABEL = "mb-1 block text-sm text-[#5E6D84]";

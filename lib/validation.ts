@@ -1,6 +1,6 @@
 import { moneyWhole, todayInZone } from "./format";
 
-// Max amount 
+// Max amount that can be inserted
 export const MAX_AMOUNT = 1_000_000_000;
 
 
@@ -10,7 +10,7 @@ export function isRealDate(value: string): boolean {
   return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 
-/** Error message for a bad expense date, or null when it's fine. */
+// Validate if the date is in the future
 export function checkDate(value: string): string | null {
   if (!isRealDate(value)) return "Enter a valid date.";
   // ISO dates compare correctly as strings. "Today" is in the app's time zone.

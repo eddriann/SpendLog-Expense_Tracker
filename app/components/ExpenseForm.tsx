@@ -6,6 +6,7 @@ import { CATEGORIES } from "../../lib/categories";
 import { money, todayInZone } from "../../lib/format";
 import { MAX_AMOUNT, checkDate, parseAmount } from "../../lib/validation";
 
+// Input and label className design
 const INPUT =
   "w-full rounded-[4px] border border-[#D5DDD7] bg-white px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C2A43]";
 const LABEL = "mb-1 block text-sm text-[#5E6D84]";
@@ -16,7 +17,7 @@ export default function ExpenseForm() {
     message: string;
     field?: "category" | "date" | "amount";
   } | null>(null);
-  // "Added ₱120.00 to Food & Dining." Shown from 1024px up only, and cleared after a few seconds.
+
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,8 +28,8 @@ export default function ExpenseForm() {
 
   async function handleAction(formData: FormData) {
     setNotice(null);
-    // Same rules as the server, run first. Some phone browsers ignore `max` on date and
-    // number inputs, so the browser alone can't be trusted to stop a bad value.
+
+    // Validate amount and date for all Phones and Desktop
     const amountCheck = parseAmount(String(formData.get("amount") ?? ""));
     if (!amountCheck.ok) {
       setError({ message: amountCheck.error, field: "amount" });

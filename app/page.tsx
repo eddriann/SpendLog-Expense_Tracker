@@ -35,12 +35,14 @@ export default async function HomePage({
     { $group: { _id: "$date", total: { $sum: "$amount" } } },
   ]);
 
+  //
   const daily: number[] = Array.from({ length: today.daysInMonth }, () => 0);
   for (const row of dailyAgg) {
     const d = Number(row._id.slice(8, 10));
     if (d >= 1 && d <= today.daysInMonth) daily[d - 1] += row.total;
   }
 
+  // get budget from db
   let budgetDoc = (await Budget.findOne({
     month: today.month,
   }).lean()) as { month: string; amount: number } | null;

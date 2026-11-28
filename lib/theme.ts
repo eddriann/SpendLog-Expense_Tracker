@@ -1,4 +1,3 @@
-// lib/theme.ts
 // Palette used by SVG drawing code. Tailwind classes elsewhere use the same hex values.
 export const C = {
   paper: "#F5F7F3", // page background

@@ -1,4 +1,3 @@
-// lib/pace.ts
 // Turns "spent so far + budget + day of month" into the sentence the page leads with.
 import { moneyWhole, monthShort } from "./format";
 
@@ -26,7 +25,7 @@ export const EARLY_DAYS = 3;
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export function summarizePace(input: {
-  month: string; // YYYY-MM
+  month: string;
   day: number; // 1-based day of month
   daysInMonth: number;
   spent: number;
@@ -37,6 +36,7 @@ export function summarizePace(input: {
   const projected = day > 0 ? (spent / day) * daysInMonth : 0;
   const base = { spent, projected, daysLeft };
 
+  // no budget set
   if (!budget || budget <= 0) {
     return {
       ...base,
@@ -47,6 +47,7 @@ export function summarizePace(input: {
     };
   }
 
+  // spending over the budget
   if (spent > budget) {
     return {
       ...base,
@@ -60,6 +61,7 @@ export function summarizePace(input: {
     };
   }
 
+  // Early days, No projection yet
   if (day <= EARLY_DAYS) {
     return {
       ...base,
@@ -70,8 +72,10 @@ export function summarizePace(input: {
     };
   }
 
+  // Formula to calculate maximum budget to be spend in a day
   const perDay = daysLeft > 0 ? (budget - spent) / daysLeft : 0;
 
+  // projected spending is over the budget
   if (projected > budget) {
     return {
       ...base,
@@ -85,6 +89,7 @@ export function summarizePace(input: {
     };
   }
 
+  // Spending will not go over the budget
   const under = budget - projected;
   return {
     ...base,

@@ -1,7 +1,4 @@
-// lib/categories.ts
 // The only categories an expense can be saved with. Used by the form (dropdown)
-// and by the server action (validation), so the two can't drift apart.
-// This lives outside actions.ts because "use server" files can only export async functions.
 export const CATEGORIES = [
   "Food & Dining",
   "Transportation",

@@ -7,18 +7,18 @@ const centsFmt = new Intl.NumberFormat("en-PH", {
   maximumFractionDigits: 2,
 });
 
-/** ₱1,234.50 */
+// Format for spending with cents (Decimal Places)
 export function money(n: number): string {
   return `${CURRENCY}${centsFmt.format(n)}`;
 }
 
-/** ₱1,235 (rounded, for sentences) */
+// Format for headline (rounded, for sentences)
 export function moneyWhole(n: number): string {
   const v = Math.round(n);
   return `${CURRENCY}${wholeFmt.format(v === 0 ? 0 : v)}`;
 }
 
-/** ₱1.2k (for chart axes) */
+// ₱1.2k (for chart axes)
 export function moneyCompact(n: number): string {
   if (n >= 1000) {
     const k = n / 1000;
@@ -27,7 +27,7 @@ export function moneyCompact(n: number): string {
   return `${CURRENCY}${Math.round(n)}`;
 }
 
-/** "2026-11" -> "November 2026" */
+// Format "2026-11" to "November 2026"
 export function monthLabel(ym: string): string {
   const [y, m] = ym.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", {
@@ -37,7 +37,7 @@ export function monthLabel(ym: string): string {
   });
 }
 
-/** "2026-11" -> "Nov" */
+// "2026-11" -> "Nov" 
 export function monthShort(ym: string): string {
   const [y, m] = ym.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-US", {
@@ -71,7 +71,7 @@ export function dayHeading(iso: string, currentYear: number): string {
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", opts);
 }
 
-/** Today's date parts in APP_TIME_ZONE, so "this month" doesn't flip at the wrong hour. */
+// Today's date parts in APP_TIME_ZONE, so "this month" doesn't flip at the wrong hour
 export function todayInZone(now: Date = new Date()) {
   const iso = now.toLocaleDateString("en-CA", { timeZone: APP_TIME_ZONE }); // YYYY-MM-DD
   const [year, month, day] = iso.split("-").map(Number);
